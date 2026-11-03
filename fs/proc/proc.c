@@ -3,6 +3,7 @@
 #include "../vfs.h"
 #include "proc.h"
 #include <kernel/metadata.h>
+#include <memory/page.h>
 
 /*
  * OpenKernel /proc filesystem.
@@ -49,6 +50,41 @@ proc_read_version(struct vfs_node *node, char *buf, uint32_t size)
     return (int)written;
 }
 
+static int
+proc_read_meminfo(struct vfs_node *node, char *buf, uint32_t size)
+{
+    static const char prefix[] = "Total pages: ";
+    static const char middle[] = "\nFree pages: ";
+    uint32_t used = 0;
+
+    (void)node;
+    if (buf == 0 && size != 0)
+        return -1;
+
+    for (uint32_t i = 0; prefix[i] != '\0' && used < size; i++)
+        buf[used++] = prefix[i];
+
+    uint32_t values[] = { memory_total_pages(), memory_free_pages() };
+    for (uint32_t value_index = 0; value_index < 2; value_index++) {
+        uint32_t value = values[value_index];
+        char digits[10];
+        uint32_t count = 0;
+        do {
+            digits[count++] = (char)('0' + value % 10u);
+            value /= 10u;
+        } while (value != 0 && count < sizeof(digits));
+        while (count != 0 && used < size)
+            buf[used++] = digits[--count];
+        if (value_index == 0) {
+            for (uint32_t i = 0; middle[i] != '\0' && used < size; i++)
+                buf[used++] = middle[i];
+        } else if (used < size) {
+            buf[used++] = '\n';
+        }
+    }
+    return (int)used;
+}
+
 int
 procfs_init(void)
 {
@@ -71,6 +107,8 @@ procfs_init(void)
     version = vfs_create_file(&proc_root, "/version",
                               proc_read_version, 0);
     if (version == 0)
+        return -1;
+    if (vfs_create_file(&proc_root, "/meminfo", proc_read_meminfo, 0) == 0)
         return -1;
 
     if (vfs_mount_fs(vfs_get_root(), "proc", &proc_root, 0, 0) != 0)

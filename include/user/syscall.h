@@ -187,6 +187,22 @@ static inline int32_t ok_load_oso(const char *path) {
                        (uint32_t)(uintptr_t)path, 0, 0);
 }
 
+static inline int32_t ok_module_load(const char *path) {
+    if (path == 0 || path[0] == '\0') {
+        return -OK_EFAULT;
+    }
+    return ok_syscall3(OK_SYS_MODULE_LOAD,
+                       (uint32_t)(uintptr_t)path, 0, 0);
+}
+
+static inline int32_t ok_module_unload(const char *name) {
+    if (name == 0 || name[0] == '\0') {
+        return -OK_EFAULT;
+    }
+    return ok_syscall3(OK_SYS_MODULE_UNLOAD,
+                       (uint32_t)(uintptr_t)name, 0, 0);
+}
+
 static inline int32_t ok_yield(void) {
     return ok_syscall3(OK_SYS_YIELD, 0, 0, 0);
 }

@@ -5,6 +5,7 @@
 #include <kernel/syscall.h>
 #include <driver/mouse.h>
 #include <driver/keyboard.h>
+#include <kernel/process.h>
 
 #define PIC1_COMMAND 0x20
 #define PIC1_DATA    0x21
@@ -117,7 +118,7 @@ void interrupts_enable(void) {
     __asm__ volatile ("sti");
 }
 
-void interrupt_handler(void *registers) {
+uint32_t *interrupt_handler(void *registers) {
     struct kernel_panic_registers *frame =
         (struct kernel_panic_registers *)registers;
     uint32_t vector = frame->vector;
@@ -130,9 +131,11 @@ void interrupt_handler(void *registers) {
     }
 
     if (vector == SYSCALL_VECTOR) {
+        uint32_t syscall_number = frame->eax;
+        process_interrupt_enter((uint32_t *)frame);
         frame->eax = (uint32_t)syscall_dispatch(frame->eax, frame->ebx,
                                                 frame->ecx, frame->edx);
-        return;
+        return process_interrupt_return((uint32_t *)frame, syscall_number);
     }
 
     if (vector >= PIC1_OFFSET && vector < PIC1_OFFSET + 16) {
@@ -147,4 +150,5 @@ void interrupt_handler(void *registers) {
         }
         port_byte_out(PIC1_COMMAND, PIC_EOI);
     }
+    return (uint32_t *)frame;
 }

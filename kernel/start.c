@@ -16,14 +16,14 @@
 #include <kernel/bootopts.h>
 #include <kvideo/fbcon.h>
 #include "../fs/vfs.h"
-#include <kernel/syskrnl.h>
+#include <memory/page.h>
+#include <kernel/module.h>
 
 // Fix Undefined errors
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
 
-extern void info_module_init(void);
 extern void initrd_set_base(uint32_t addr); // Bridge for execve
 extern void draw_bmp(struct multiboot_info *mbi);
 extern void fade_bmp_to_dust(struct multiboot_info *mbi);
@@ -78,6 +78,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_addr, uint32_t oem)
 
     struct multiboot_info *mbi = (struct multiboot_info *)multiboot_addr;
     assert(mbi != NULL);
+    if (memory_init(mbi) != 0) {
+        panic("Physical memory initialization failed!");
+    }
     bootopts_init((mbi->flags & (1u << 2))
                       ? (const char *)(uintptr_t)mbi->cmdline : 0);
     k_set_quiet(bootopts_quiet());
@@ -89,6 +92,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_addr, uint32_t oem)
     }
 
     vfs_init();
+    module_system_init();
     if (vfs_set_console(bootopts_console_path()) != 0) {
         panic("Invalid console= boot parameter!");
     }
@@ -130,6 +134,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_addr, uint32_t oem)
 
     if (vfs_index_tar(initrd_start) < 0) {
         k_print("[VFS] Could not index initramfs directories.\n");
+    } else {
+        module_set_initrd(initrd_start);
+        module_load_all_from_initrd();
     }
 
     if (okfs_mount() != 0) {
@@ -155,13 +162,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_addr, uint32_t oem)
     k_clear_screen();
     sleep_ms(2000);
 
-    info_module_init();
-
     k_clear_screen();
 
     k_print("Here we go!\n");
-
-    syskrnl_load();
 
     init_path();
 

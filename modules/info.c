@@ -3,6 +3,7 @@
 #include <kernel/time.h>
 #include <ksys/system-info.h>
 #include <kernel.h>
+#include <kernel/module.h>
 
 void info_module_init(void) {
     k_print("----------------------------------------\n");
@@ -33,3 +34,13 @@ void info_module_init(void) {
     k_print("Info complete: ");
     k_print_char('y');
 }
+
+static int __init info_module_start(void) {
+    info_module_init();
+    return 0;
+}
+
+static void __exit info_module_stop(void) {
+}
+
+KERNEL_MODULE(info, info_module_start, info_module_stop);

@@ -38,6 +38,8 @@
 #define OK_SYS_NET_UDP_SEND 18u
 #define OK_SYS_NET_UDP_RECEIVE 19u
 #define OK_SYS_NET_GET_IPV4 20u
+#define OK_SYS_MODULE_LOAD 21u
+#define OK_SYS_MODULE_UNLOAD 22u
 
 struct ok_fb_info {
 	uint32_t width;
@@ -53,6 +55,7 @@ struct ok_fb_info {
 #define OK_EFAULT 14
 #define OK_EIO    5
 #define OK_ENOSYS 38
+#define OK_ENOMEM 12
 
 int32_t syscall_dispatch(uint32_t number, uint32_t arg1, uint32_t arg2,
 						 uint32_t arg3);

@@ -8,7 +8,7 @@ static int __init syskrnl_init(void)
 {
     k_print("[MODULE] OpenKernel Build Platform: ");
     k_print(OPENKERNEL_BUILDENV);
-    k_print('\n');
+    k_print_char('\n');
 
     return 0;
 }

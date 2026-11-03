@@ -13,11 +13,10 @@ Userspace can create VFS device nodes with `ok_mkdev(path, type)` from
 - Keyboard devices return characters already available from the keyboard
   queue.
 
-The init program creates several conventional device paths, including
-`/device/console`, `/device/fb0`, `/device/null`, `/device/zero`,
-`/device/random`, `/device/keyboard`, and `/device/tty0` through `tty9`. The
-VFS itself creates a console and TTY nodes during initialization, and some
-requested aliases may already exist or depend on successful path creation.
+The kernel mounts devtmpfs at `/dev` and also exposes the same namespace at
+`/device` for compatibility. It creates conventional paths during startup:
+`console`, `fb0`, `null`, `zero`, `random`, `keyboard`, and `tty0` through
+`tty9`. Init does not create device nodes.
 
 This API creates namespace entries only. It does not provide general POSIX
 file descriptors: the syscall ABI currently has no userspace `open()`,

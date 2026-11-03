@@ -18,6 +18,8 @@ struct process {
 
     uint32_t kernel_stack;
     uint32_t kernel_stack_size;
+    uint32_t *interrupt_frame;
+    uint32_t fork_child;
 
     uint32_t context[6];
 
@@ -31,6 +33,9 @@ void process_leave_program(uint32_t previous_pid);
 int32_t process_execute(int32_t (*entry)(void), int returns_status);
 void process_exit_current(int32_t status);
 int32_t process_load_oso(const char *path);
+int32_t process_fork_current(void);
+void process_interrupt_enter(uint32_t *frame);
+uint32_t *process_interrupt_return(uint32_t *frame, uint32_t syscall_number);
 
 struct process *process_find(uint32_t pid);
 struct process *process_alloc(void);

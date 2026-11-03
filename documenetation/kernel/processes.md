@@ -2,12 +2,18 @@
 
 ## Current process model
 
-OpenKernel currently runs a loaded program directly in the kernel's 32-bit
-address space. Process support tracks a current PID and saves one execution
-context so a returned program can hand control back to its caller. This is not
-a scheduler, process table, or isolation model: there are no per-process page
-tables, privilege separation, or independent process memory. `yield()` does
-not switch tasks. `fork()` returns `-ENOSYS`.
+OpenKernel runs programs directly in the kernel's 32-bit address space.
+Cooperative scheduling can switch saved interrupt frames when a process calls
+`yield()`. `fork()` clones the active 16 KiB stack and returns the child PID in
+the parent and zero in the child; the child becomes runnable at the next
+yield. Exiting a forked child resumes another runnable process.
+
+This is not process isolation: the child stack is private, but code, globals,
+heap, devices, and kernel state remain shared, and every process runs at kernel
+privilege. There is no timer preemption or `wait()` syscall. Programs must
+cooperate at syscall/yield boundaries, and a bad pointer or untrusted program
+can corrupt the kernel. Do not assume POSIX semantics beyond the documented
+fork return behavior.
 
 `execve(path, argv, envp)` searches the initramfs for `path` and loads the
 image. `argv` and `envp` are currently ignored. Programs normally enter

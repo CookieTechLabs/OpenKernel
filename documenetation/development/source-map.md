@@ -11,8 +11,7 @@ The following paths identify the main implementation areas:
 | `kernel/video/`, `kernel/bmp.c`, `kernel/desktop.c` | Framebuffer, framebuffer console, logo rendering, desktop helpers. |
 | `sdrivers/` | Keyboard, mouse, and PC-speaker drivers. |
 | `memory/` | Loader range checks and current panic-based OOM handler. |
-| `bionicbox/` | Userspace init and interactive shell sources. |
-| `initfs/` | Files and programs packaged into the boot initramfs. |
+| `initramfs/` | Tracked minimal initramfs template used to build the boot image. |
 | `include/` | Public kernel and userspace C headers. |
 | `modules/` | Module examples and build inputs; runtime support is incomplete. |
 | `build_fs.sh`, `Makefile`, `make_iso.sh`, `run.sh` | Archive, kernel, ISO, and QEMU workflow. |

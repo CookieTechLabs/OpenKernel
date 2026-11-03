@@ -23,10 +23,7 @@ global process_fork_context
 ;   +16 ESP
 ;   +20 EIP
 ;
-; This routine copies the saved continuation into the child context.
-; It does NOT allocate a child stack, clone an address space, or
-; enqueue a child process. Those operations must be implemented
-; by the process-management layer before this can support fork().
+; Kept as a low-level register-context helper for the process layer.
 
 process_fork_context:
     push esi

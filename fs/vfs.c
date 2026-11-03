@@ -4,6 +4,8 @@
 #include <driver/keyboard.h>
 #include <driver/net.h>
 #include "proc/proc.h"
+#include <fs/sys/sysfs.h>
+#include <memory/page.h>
 
 #define MAX_VFS_NODES 256
 #define MAX_VFS_MOUNTS 16
@@ -12,6 +14,7 @@ static struct vfs_mount mount_pool[MAX_VFS_MOUNTS];
 static uint32_t node_count = 0;
 static uint32_t mount_count = 0;
 static struct vfs_node root_node = { "/", VFS_DIRECTORY, 0, 0, 0, 0, 0, 0, 0 };
+static struct vfs_node dev_root;
 static struct vfs_node *active_console;
 static uint32_t random_state = 0x4F70656Bu;
 
@@ -193,6 +196,10 @@ struct vfs_node *vfs_lookup(struct vfs_node *root, const char *path) {
         if (!found) {
             return 0;
         }
+    }
+    if (current->flags & VFS_MOUNTED) {
+        struct vfs_mount *mount = (struct vfs_mount *)current->data;
+        return mount != 0 ? mount->root : 0;
     }
     return current;
 }
@@ -466,6 +473,11 @@ int vfs_console_write(const char *buffer, uint32_t size) {
 
 int vfs_create_device(const char *path, uint32_t type) {
     struct vfs_node *node;
+    struct vfs_node *parent;
+    char parent_path[VFS_MAX_PATH];
+    uint32_t path_length = 0;
+    uint32_t separator = 0;
+    uint32_t name_length;
 
     if (path == 0 || path[0] != '/' || path[1] == '\0' ||
         (type != VFS_DEVICE_CONSOLE && type != VFS_DEVICE_NULL &&
@@ -473,13 +485,43 @@ int vfs_create_device(const char *path, uint32_t type) {
          type != VFS_DEVICE_KEYBOARD && type != VFS_DEVICE_NETWORK)) {
         return -1;
     }
+    while (path[path_length] != '\0' && path_length < sizeof(parent_path)) {
+        if (path[path_length] == '/') {
+            separator = path_length;
+        }
+        path_length++;
+    }
+    if (path_length >= sizeof(parent_path) || separator + 1 == path_length) {
+        return -1;
+    }
+    name_length = path_length - separator - 1;
+    if (name_length >= VFS_NAME_SIZE) {
+        return -1;
+    }
+    if (separator == 0) {
+        parent_path[0] = '/';
+        parent_path[1] = '\0';
+    } else {
+        for (uint32_t index = 0; index < separator; index++) {
+            parent_path[index] = path[index];
+        }
+        parent_path[separator] = '\0';
+    }
+    parent = vfs_lookup(vfs_get_root(), parent_path);
+    if (parent == 0 || !(parent->flags & VFS_DIRECTORY)) {
+        return -1;
+    }
     node = vfs_lookup(vfs_get_root(), path);
     if (node != 0 && !(node->flags & VFS_DEVICE)) {
         return -1;
     }
     if (node == 0) {
-        node = vfs_create_file(vfs_get_root(), path, device_read,
-                               device_write);
+        char name[VFS_NAME_SIZE];
+        for (uint32_t index = 0; index < name_length; index++) {
+            name[index] = path[separator + index + 1];
+        }
+        name[name_length] = '\0';
+        node = vfs_create_node(name, VFS_FILE | VFS_DEVICE, parent);
     }
     if (node == 0) {
         return -1;
@@ -612,27 +654,48 @@ int vfs_index_tar(uint32_t tar_address) {
 }
 
 void mount_essential_folders(void) {
-    char tty_path[] = "/device/tty0";
-    struct vfs_node *console;
+    static int mounted;
 
-    /* Only create the runtime device namespace; other directories must be
-       created by a filesystem or an explicit userspace/device request. */
-    vfs_mkdir(vfs_get_root(), "/device");
-    console = vfs_create_file(vfs_get_root(), "/device/console", 0,
-                              console_device_write);
-    if (console != 0) {
-        console->flags |= VFS_DEVICE;
-        active_console = console;
+    if (mounted) {
+        return;
+    }
+    mounted = 1;
+    dev_root.name[0] = '/';
+    dev_root.name[1] = '\0';
+    dev_root.flags = VFS_DIRECTORY;
+    dev_root.parent = 0;
+    dev_root.children = 0;
+    dev_root.next = 0;
+    dev_root.read = 0;
+    dev_root.write = 0;
+    dev_root.data = 0;
+    dev_root.size = 0;
+
+    if (vfs_mount_fs(vfs_get_root(), "dev", &dev_root, 0, 0) != 0 ||
+        vfs_mount_fs(vfs_get_root(), "device", &dev_root, 0, 0) != 0) {
+        mounted = 0;
+        k_print("[VFS] Failed to mount devtmpfs.\n");
+        return;
+    }
+
+    if (vfs_create_device("/dev/console", VFS_DEVICE_CONSOLE) != 0 ||
+        vfs_create_device("/dev/null", VFS_DEVICE_NULL) != 0 ||
+        vfs_create_device("/dev/zero", VFS_DEVICE_ZERO) != 0 ||
+        vfs_create_device("/dev/random", VFS_DEVICE_RANDOM) != 0 ||
+        vfs_create_device("/dev/keyboard", VFS_DEVICE_KEYBOARD) != 0 ||
+        vfs_create_device("/dev/fb0", VFS_DEVICE_CONSOLE) != 0) {
+        k_print("[VFS] Failed to populate devtmpfs.\n");
+        return;
     }
     for (char terminal = '0'; terminal <= '9'; terminal++) {
-        tty_path[11] = terminal;
-        struct vfs_node *tty = vfs_create_file(vfs_get_root(), tty_path, 0,
-                                               console_device_write);
-        if (tty != 0) {
-            tty->flags |= VFS_DEVICE;
+        char path[] = "/dev/tty0";
+        path[8] = terminal;
+        if (vfs_create_device(path, VFS_DEVICE_CONSOLE) != 0) {
+            k_print("[VFS] Failed to create a tty device.\n");
+            return;
         }
     }
-    k_print("[VFS] Essential directories initialized.\n");
+    k_print("[VFS] Mounted devtmpfs at /dev.\n");
 }
 
 void vfs_init(void) {
@@ -654,5 +717,10 @@ void vfs_init(void) {
         k_print("[VFS] Failed to initialize /proc.\n");
     } else {
         k_print("[VFS] Mounted /proc.\n");
+    }
+    if (sysfs_init() != 0) {
+        k_print("[VFS] Failed to initialize /sys.\n");
+    } else {
+        k_print("[VFS] Mounted /sys.\n");
     }
 }

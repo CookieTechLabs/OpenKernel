@@ -3,6 +3,7 @@ ENTRY(_start)
 SECTIONS
 {
     . = 0x100000;
+    __kernel_start = .;
 
     .multiboot : {
         *(.multiboot)
@@ -26,4 +27,11 @@ SECTIONS
         *(COMMON)
         *(.bss)
     }
+
+    __kernel_modules_start = .;
+    .kernel_modules : ALIGN(4) {
+        KEEP(*(.kernel_modules))
+    }
+    __kernel_modules_end = .;
+    __kernel_end = ALIGN(4K);
 }

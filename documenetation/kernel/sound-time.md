@@ -15,10 +15,11 @@ OSF decoder.
 
 `void sleep_ms(uint32_t ms)` is declared in `<kernel/time.h>`. It provides a
 busy-loop delay; it does not sleep a task, use a timer interrupt, or guarantee
-wall-clock accuracy. The kernel currently has no scheduler or timer-based
-sleep service. See [sleep_ms reference](../time/sleep_ms.md).
+wall-clock accuracy. The cooperative process scheduler does not preempt this
+loop, and there is no timer-based sleep service. See
+[sleep_ms reference](../time/sleep_ms.md).
 
 ## No userspace audio/timer API
 
 The current syscall table has no sound, timer, or sleep syscall. `ok_yield()`
-executes a CPU `pause` instruction but does not yield to another task.
+executes `pause` and switches to another runnable process when one is ready.

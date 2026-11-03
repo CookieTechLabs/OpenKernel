@@ -16,14 +16,18 @@ source selection.
 
 At a high level, startup:
 
-1. Reads the Multiboot command line and initializes boot options.
-2. Initializes the IDT/PIC and PS/2 keyboard.
-3. Initializes the VFS base device namespace and selects the console.
-4. Initializes the Multiboot framebuffer when available; attempts mouse setup.
-5. Obtains the first GRUB module as the initramfs and indexes its TAR paths.
-6. Mounts/formats OKFS when ATA storage is available and attempts to unpack
+1. Reads Multiboot information, builds the physical-frame bitmap from the
+   memory map, and enables the x86 identity-mapped paging directory.
+2. Reads the Multiboot command line and initializes boot options.
+3. Initializes the IDT/PIC and PS/2 keyboard.
+4. Initializes the VFS, mounts devtmpfs, procfs, and sysfs, and selects the
+   console.
+5. Initializes the Multiboot framebuffer when available; attempts mouse setup.
+6. Obtains the first GRUB module as the initramfs, indexes its TAR paths, and
+   inserts supported ELF32 modules from `/lib/modules/`.
+7. Mounts/formats OKFS when ATA storage is available and attempts to unpack
    regular archive files.
-7. Registers the initramfs base for program loading, initializes sound and
+8. Registers the initramfs base for program loading, initializes sound and
    other startup components, then executes the configured init entry.
 
 The exact sequence and error handling are implemented in `kernel/start.c`.

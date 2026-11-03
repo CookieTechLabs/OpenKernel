@@ -29,6 +29,8 @@ VERSION = $(RELVERSION).$(SUBVERSION).$(PATCHVERSION)$(EXTRAVERSION)
 MOD_DIR = $(BUILD_DIR)/mod
 MOD_SOURCES = $(wildcard modules/*.c)
 MOD_OBJS = $(patsubst modules/%.c,$(MOD_DIR)/%.mo,$(MOD_SOURCES))
+MODULE_INSTALL_DIR = $(BUILD_DIR)/modules/$(VERSION)
+MODULE_IMAGES = $(patsubst $(MOD_DIR)/%.mo,$(MODULE_INSTALL_DIR)/%.ko,$(MOD_OBJS))
 
 # oconf configuration tools.
 OCONF_DIR = scripts/oconf
@@ -137,8 +139,8 @@ PLAIN_ASM_OBJECTS = $(filter-out $(ENTRY_OBJ),$(ASM_OBJECTS))
 
 LOGO_OBJ = $(BUILD_DIR)/logo_bmp.o
 
-# Objects included in the archive.
-PLAIN_OBJECTS = $(PLAIN_ASM_OBJECTS) $(C_OBJECTS) $(LOGO_OBJ) $(MOD_OBJS)
+# Kernel objects; loadable module objects are built only by the modules target.
+PLAIN_OBJECTS = $(PLAIN_ASM_OBJECTS) $(C_OBJECTS) $(LOGO_OBJ)
 
 # Objects included in the bootable kernel.
 BOOT_OBJECTS = $(ENTRY_OBJ) $(PLAIN_OBJECTS)
@@ -154,7 +156,7 @@ BUILTIN_ARCHIVES = $(C_BUILTIN_ARCHIVES) $(ASM_BUILTIN_ARCHIVES)
 # Automatic dependency files.
 DEPS = $(C_OBJECTS:.o=.d) $(MOD_OBJS:.mo=.d)
 
-.PHONY: all configured-build clean linux run-linux patch_modules \
+.PHONY: all configured-build clean linux run-linux os.iso patch_modules modules \
 	oconf-tools olddefconfig config-build
 
 # Generate .config first, then restart Make so source lists use it.
@@ -205,11 +207,18 @@ $(BUILD_DIR)/asm/%.o: %.asm
 	@echo "AS $<"
 	@$(AS) $(ASFLAGS) $< -o $@
 
-# Compile built-in module objects.
+# Compile loadable module objects.
 $(MOD_DIR)/%.mo: modules/%.c $(VERSION_HEADER)
 	@mkdir -p $(dir $@)
 	@echo "CC $<"
 	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(MODULE_INSTALL_DIR)/%.ko: $(MOD_DIR)/%.mo
+	@mkdir -p $(dir $@)
+	@echo "MODULE $@"
+	@cp "$<" "$@"
+
+modules: $(MODULE_IMAGES)
 
 # Convert the bitmap logo into an ELF object.
 $(LOGO_OBJ): kernel/video/logo.bmp
@@ -267,21 +276,27 @@ $(KERNEL): $(ENTRY_OBJ) $(OPENKERNEL_A) linker.ld
 	echo "Kernel Image is ready! (build #$$build)"
 
 # Build the host-side Linux program.
-linux: $(KERNEL) $(LINUX_PROGRAM)
+linux: all $(LINUX_PROGRAM)
 
 $(LINUX_PROGRAM): $(HOST_SOURCES)
 	@mkdir -p $(dir $@)
 	@echo "HOST CC $@"
 	@$(HOST_CC) $(HOST_CFLAGS) -o $@ $(HOST_SOURCES)
 
-# Build the ISO.
-os.iso: $(KERNEL) $(shell find initfs -type f) \
-	iso/boot/grub/grub.cfg build_fs.sh copy_kernel.sh make_iso.sh
+# Build the ISO after configuration has been generated and applied.
+os.iso: $(shell find initramfs -type f) \
+	boot/grub.cfg build_fs.sh copy_kernel.sh make_iso.sh
+	@$(MAKE) --no-print-directory all
+	@$(MAKE) --no-print-directory modules
+	@mkdir -p iso/boot/grub
+	@cp boot/grub.cfg iso/boot/grub/grub.cfg
 	@./copy_kernel.sh
-	@./build_fs.sh
+	@./build_fs.sh "$(VERSION)"
 	@./make_iso.sh
 
-run-linux: linux os.iso
+run-linux:
+	@$(MAKE) --no-print-directory linux
+	@$(MAKE) --no-print-directory os.iso
 	@./$(LINUX_PROGRAM) $(QEMU_ARGS)
 
 # Build the oconf configuration tools.
@@ -368,5 +383,15 @@ patch_modules:
 clean:
 	rm -rf $(BUILD_DIR) Kernel.syms openkernel \
 		$(VERSION_HEADER) $(BUILDENV_HEADER)
+
+DSK ?=
+
+install:
+	@if [ -z "$(DSK)" ]; then \
+		echo "Error: Target disk (DSK) is not set."; \
+		echo "Usage: make install DSK=sdb"; \
+		exit 1; \
+	fi
+	sudo dd if=build/kernel.bin of=/dev/$(DSK) conv=fsync status=progress
 
 -include $(DEPS)

@@ -7,13 +7,13 @@ mount that makes persistent files visible under VFS paths.
 ## VFS namespace
 
 The VFS is a fixed-size in-memory tree. It supports absolute-path lookup,
-directory creation, file/device nodes, directory listing, and optional mount
-hooks. Limits in the current implementation are 256 allocated nodes, 16 mounts,
-and 64 bytes per node name. Startup creates `/device`, the console, and
-`/device/tty0` through `/device/tty9`. TAR indexing adds archive paths as
-nodes, enabling `ls`/directory lookup; indexed regular files do not currently
-get TAR-backed read callbacks, so listing a file does not mean VFS can read
-its contents.
+directory creation, file/device nodes, directory listing, and mounts. Limits
+in the current implementation are 256 allocated nodes, 16 mounts, and 64
+bytes per node name. Startup mounts devtmpfs at `/dev` and as the compatibility
+alias `/device`, and mounts generated procfs and sysfs trees at `/proc` and
+`/sys`. TAR indexing adds archive paths as nodes, enabling `ls`/directory
+lookup; indexed regular files do not currently get TAR-backed read callbacks,
+so listing a file does not mean VFS can read its contents.
 
 The `readdir` syscall returns newline-separated child names. Directories have
 a trailing `/`. Listing output is limited to the syscall's 1024-byte buffer
@@ -31,10 +31,11 @@ Userspace can request device creation with `ok_mkdev(path, type)` from
   generator; this is not cryptographically secure.
 - `OK_DEVICE_KEYBOARD`: reads consume available translated keyboard characters.
 
-The kernel creates required console nodes during VFS initialization. The
-userspace init program also tries to create conventional device nodes. A
-created device node is not a general POSIX file descriptor: the current syscall
-ABI has no `open`, `read`, or `close` interface for arbitrary VFS files.
+The kernel creates conventional device nodes during VFS initialization; init
+does not create them. A created device node is not a general POSIX file
+descriptor: the current syscall ABI has no `open`, `read`, or `close`
+interface for arbitrary VFS files. `ok_device_read()` and
+`ok_device_write()` access a path directly.
 
 ## OKFS persistent store
 

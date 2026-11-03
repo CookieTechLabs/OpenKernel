@@ -22,11 +22,20 @@ hosted implementation of OpenKernel's kernel or shell.
 
 ## Create and boot the ISO
 
-`make run-linux` builds the kernel and launcher, creates the initramfs from
-`initfs/`, copies the kernel into the ISO tree, creates `os.iso`, and launches
-QEMU. The equivalent scripts can be run separately: `build_fs.sh`,
-`copy_kernel.sh`, then `make_iso.sh`. GRUB configuration is under
-`iso/boot/grub/`.
+```sh
+make os.iso
+```
+
+`make os.iso` builds the kernel and separate loadable modules, stages a
+minimal initramfs from the tracked `initramfs/` template, copies in the GRUB
+configuration, and creates `os.iso`. No ignored or pre-existing `initfs/`
+directory is required. The default init is a text script that reports that no
+userspace shell is included in the repository. `make run-linux` additionally
+builds the QEMU launcher and boots the generated ISO.
+
+The GRUB source configuration is `boot/grub.cfg`; generated ISO files are
+placed under `iso/`. `build_fs.sh <kernel-version>` can regenerate the
+initramfs after `make modules`.
 
 Pass QEMU arguments through Make, for example:
 

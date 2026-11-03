@@ -2,10 +2,10 @@
 
 ## Building the archive
 
-`build_fs.sh` makes a USTAR archive from the contents of `initfs/` at
-`iso/boot/initramfs.img`. GRUB supplies that archive as a Multiboot module.
-The default init entry is `sys/init`; it is a binary in the checked-in
-initramfs, so a text script is not required for normal boot.
+`make os.iso` creates a USTAR archive at `iso/boot/initramfs.img` from the
+tracked `initramfs/` template and separately built module images. GRUB supplies
+that archive as a Multiboot module. The default init entry, `sys/init`, is a
+text startup script; this repository does not include a userspace shell.
 
 At startup, TAR entries are indexed into the VFS tree. If ATA-backed OKFS
 mounts successfully, regular files are also copied into that separate store.
@@ -43,7 +43,7 @@ is implemented in `kernel/script.c`.
 
 ## Adding or selecting init
 
-Place a program or script in `initfs/`, rebuild the archive, and choose its
+Add a program or script under `initramfs/`, rebuild the ISO, and choose its
 archive path using `init=...` in the GRUB command line. Paths are archive entry
 names, not paths looked up through the mounted VFS. `exec PATH` within a script
 uses the same initramfs archive loader.

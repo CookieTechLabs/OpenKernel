@@ -1,10 +1,13 @@
 # Userspace init and shell
 
-The active shell source is `bionicbox/shell.c`; `bionicbox/init.c` creates
-runtime device nodes, performs a keyboard input check, and attempts to execute
-`/shell.okx`. The kernel's default init archive entry is `sys/init`, a
-prebuilt binary in the checked-in initramfs. Thus, the C files are source for
-userspace programs, while the booted image is selected from archive entries.
+The tracked initramfs includes a small text init script, but this repository
+does not include a userspace shell binary. The default script reports this
+limitation after the kernel boots. Device nodes are provided by the kernel's
+devtmpfs, not init.
+
+The following describes the shell interface supported by the prebuilt shell
+image used by earlier builds; it is not included in the ISO built from this
+repository.
 
 ## Shell built-ins
 

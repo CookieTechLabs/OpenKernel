@@ -24,6 +24,7 @@ isr_common_stub:
     push esp
     call interrupt_handler
     add esp, 4
+    mov esp, eax
 
     pop gs
     pop fs
@@ -49,6 +50,7 @@ irq_common_stub:
     push esp
     call interrupt_handler
     add esp, 4
+    mov esp, eax
 
     pop gs
     pop fs

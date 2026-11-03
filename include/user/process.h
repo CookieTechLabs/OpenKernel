@@ -8,9 +8,9 @@
 typedef int32_t (*oso_entry_t)(void);
 
 /*
- * Process ABI wrappers for OpenKernel's current 32-bit int 0x80 interface.
- * fork() currently returns -ENOSYS until the kernel has isolated address
- * spaces and a scheduler. execve() and launch() load a named initramfs image.
+ * Process ABI wrappers for OpenKernel's 32-bit int 0x80 interface.
+ * fork() cooperatively clones the active stack but shares the kernel address
+ * space. execve() and launch() load a named initramfs image.
  */
 static inline int32_t fork(void) {
     return ok_syscall3(OK_SYS_FORK, 0, 0, 0);

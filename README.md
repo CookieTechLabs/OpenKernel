@@ -33,7 +33,10 @@ object using `_oso_entry`. OSO objects are loaded with `oso_load()` from
 `<user/process.h>`. See [Programs and process execution](documenetation/kernel/processes.md)
 for format details and restrictions.
 
-The current process support does not provide working `fork()`, a scheduler,
-per-process address spaces, or user/kernel protection. Do not run untrusted
-programs. For implementation details and feature status, consult the docs
-rather than assuming POSIX behavior from familiar API names.
+The kernel now enables x86 paging, tracks physical frames, mounts devtmpfs,
+procfs, and sysfs, supports cooperative scheduling at `yield()`, and can
+insert supported ELF32 kernel modules from the initramfs. `fork()` clones the
+active stack and resumes the child at the next scheduling point, but processes
+still share kernel memory and run at kernel privilege; this is not POSIX
+isolation. Do not run untrusted programs or modules. Consult the docs for
+implementation limits.

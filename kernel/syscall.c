@@ -7,6 +7,7 @@
 #include "../fs/vfs.h"
 #include <write/write.h>
 #include <kernel.h>
+#include <kernel/module.h>
 
 #define OK_SYSCALL_WRITE_MAX   4096u
 #define OK_SYSCALL_READDIR_MAX 1024u
@@ -75,11 +76,7 @@ int32_t syscall_dispatch(uint32_t number,
         return 0;
 
     case OK_SYS_FORK:
-        /*
-         * Do not fake fork semantics before processes
-         * have separate state.
-         */
-        return -OK_ENOSYS;
+        return process_fork_current();
 
     case OK_SYS_EXECVE:
         return execve(
@@ -235,6 +232,22 @@ int32_t syscall_dispatch(uint32_t number,
 
     case OK_SYS_NET_GET_IPV4:
         return (int32_t)net_ipv4_address();
+
+    case OK_SYS_MODULE_LOAD:
+        if (arg1 == 0) {
+            return -OK_EFAULT;
+        }
+        return module_load_from_initrd((const char *)(uintptr_t)arg1) == 0
+                   ? 0
+                   : -22;
+
+    case OK_SYS_MODULE_UNLOAD:
+        if (arg1 == 0) {
+            return -OK_EFAULT;
+        }
+        return module_remove((const char *)(uintptr_t)arg1) == 0
+                   ? 0
+                   : -22;
 
     case OK_SYS_PANIC:
         panic("OpenKernel: panicc syscall invoked");

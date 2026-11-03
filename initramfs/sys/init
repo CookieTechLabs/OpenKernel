@@ -1,0 +1,2 @@
+print OpenKernel kernel booted successfully.
+print No userspace shell is included in this source checkout.

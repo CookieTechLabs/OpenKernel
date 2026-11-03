@@ -12,8 +12,9 @@ errors. Programs are compiled for 32-bit x86.
 | --- | --- | --- |
 | Write to stdout/stderr | `ok_write(fd, buf, size)` | Only descriptors 1 and 2 are accepted; maximum 4096 bytes per dispatch. |
 | Write active console | `ok_console_write(buf, size)` | Maximum 4096 bytes per dispatch. |
-| Get process ID | `ok_getpid()` | IDs are assigned during program entry; not a general process table. |
-| Yield | `ok_yield()` | Currently executes `pause`; no scheduler switches tasks. |
+| Get process ID | `ok_getpid()` | Returns the current cooperative process ID. |
+| Yield | `ok_yield()` | Cooperatively schedules a runnable process; no timer preemption. |
+| Fork | `fork()` / `ok_fork()` | Clones the active stack; parent gets child PID, child gets zero. Address space remains shared. |
 | Exit | `ok_exit(status)` | Returns from a loaded program when an execution context is active; PID 1 cannot exit. |
 | Execute image | `execve(path, argv, envp)` | Looks up the image in initramfs; `argv` and `envp` are currently ignored. |
 | Get keyboard character | `ok_getchar()` | Returns a translated character or waits by busy-retrying `-OK_EAGAIN`. |
@@ -21,10 +22,11 @@ errors. Programs are compiled for 32-bit x86.
 | Create device node | `ok_mkdev(path, type)` | Creates one of the supported device types. |
 | List directory | `ok_listdir(path, buf, capacity)` | Newline-separated names; kernel maximum is 1024 bytes. |
 | Load OSO | `ok_load_oso(path)` | Loads a fixed-address OSO image; see [Programs and processes](processes.md). |
+| Insert/remove kernel module | `ok_module_load(path)`, `ok_module_unload(name)` | Loads an i386 ELF relocatable `.ko` from the initramfs or removes an inserted module. Modules execute at kernel privilege. |
 | Framebuffer | `ok_fb_*()` | Display info, raw-byte write, RGB pixel, and clear; see [Framebuffer API](framebuffer.md). |
 
-`fork()` is defined in `<user/process.h>` but always returns `-OK_ENOSYS` in
-the current kernel. Unknown syscall numbers also return `-OK_ENOSYS`.
+Unknown syscall numbers return `-OK_ENOSYS`. See
+[Programs and process execution](processes.md) for fork limitations.
 
 ## Error and safety model
 
