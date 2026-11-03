@@ -71,6 +71,35 @@ static const char glyph_X[10] = "\x66\x66\x3c\x18\x3c\x66\x66\x66\0\0";
 static const char glyph_Y[10] = "\x66\x66\x66\x3c\x18\x18\x18\x18\0\0";
 static const char glyph_Z[10] = "\x7e\x06\x0c\x18\x30\x60\x60\x7e\0\0";
 
+/* 
+ * Hand-drawn 8x10 bitmap design for a dog's head profile looking left:
+ * Row 0: 00011100 -> \x1c (Ears outline top)
+ * Row 1: 00110110 -> \x36 (Floppy left ear + head back)
+ * Row 2: 01100110 -> \x66 (Ears/brow structure)
+ * Row 3: 01111100 -> \x7c (Eyes/snout bridge line)
+ * Row 4: 11110000 -> \xf0 (Nose tip extension)
+ * Row 5: 11111100 -> \xfc (Muzzle/jaw line outline)
+ * Row 6: 01111110 -> \x7e (Lower jaw line finish)
+ * Row 7: 00111100 -> \x3c (Neck connection point)
+ * Row 8-9: Padding
+ */
+static const char glyph_dog[10] = "\x1c\x36\x66\x7c\xf0\xfc\x7e\x3c\0\0";
+
+/* 
+ * Hand-drawn 8x10 bitmap design for a document file with folded top right corner:
+ * Row 0: 01111100 -> \x7c (Top flat edge before fold angle)
+ * Row 1: 01000110 -> \x46 (Fold line diagonal cutout boundary)
+ * Row 2: 01000111 -> \x47 (Fold triangle shadow line corner)
+ * Row 3: 01111111 -> \x7f (Solid horizontal border block split)
+ * Row 4: 01000001 -> \x41 (Empty text row body left side guide)
+ * Row 5: 01011101 -> \x5d (Horizontal text line representation)
+ * Row 6: 01000001 -> \x41 (Line spacing segment break gap)
+ * Row 7: 01011101 -> \x5d (Horizontal text line representation)
+ * Row 8: 01111111 -> \x7f (Bottom boundary enclosure layout line)
+ * Row 9: Padding
+ */
+static const char glyph_doc[10] = "\x7c\x46\x47\x7f\x41\x5d\x41\x5d\x7f\0";
+
 const char *font8x10[128] = {
     [' '] = blank, ['!'] = glyph_bang, ['"'] = glyph_quote,
     ['#'] = glyph_hash, ['$'] = glyph_dollar, ['%'] = glyph_percent,
@@ -100,7 +129,11 @@ const char *font8x10[128] = {
     ['m'] = glyph_M, ['n'] = glyph_N, ['o'] = glyph_O, ['p'] = glyph_P,
     ['q'] = glyph_Q, ['r'] = glyph_R, ['s'] = glyph_S, ['t'] = glyph_T,
     ['u'] = glyph_U, ['v'] = glyph_V, ['w'] = glyph_W, ['x'] = glyph_X,
-    ['y'] = glyph_Y, ['z'] = glyph_Z
+    ['y'] = glyph_Y, ['z'] = glyph_Z,
+    
+    /* Mapped custom custom symbols to unused ASCII control codes slots */
+    [1] = glyph_dog,
+    [2] = glyph_doc
 };
 
 const char *font8x10_get(unsigned char character) {
