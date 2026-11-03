@@ -148,6 +148,28 @@ static inline int32_t ok_mkdev(const char *path, uint32_t type) {
     return ok_syscall3(OK_SYS_MKDEV, (uint32_t)(uintptr_t)path, type, 0);
 }
 
+static inline int32_t ok_device_read(const char *path, void *buffer,
+									uint32_t size) {
+	if (path == 0 || (buffer == 0 && size != 0)) {
+		return -OK_EFAULT;
+	}
+	return ok_syscall3(OK_SYS_DEVICE_READ, (uint32_t)(uintptr_t)path,
+					   (uint32_t)(uintptr_t)buffer, size);
+}
+
+static inline int32_t ok_device_write(const char *path, const void *buffer,
+									 uint32_t size) {
+	if (path == 0 || (buffer == 0 && size != 0)) {
+		return -OK_EFAULT;
+	}
+	return ok_syscall3(OK_SYS_DEVICE_WRITE, (uint32_t)(uintptr_t)path,
+					   (uint32_t)(uintptr_t)buffer, size);
+}
+
+static inline uint32_t ok_net_get_ipv4(void) {
+	return (uint32_t)ok_syscall3(OK_SYS_NET_GET_IPV4, 0, 0, 0);
+}
+
 static inline int32_t ok_listdir(const char *path, char *buffer,
                                  uint32_t capacity) {
     if (path == 0 || buffer == 0 || capacity == 0) {

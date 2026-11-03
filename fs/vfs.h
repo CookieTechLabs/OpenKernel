@@ -13,6 +13,7 @@
 #define VFS_DEVICE_ZERO    3u
 #define VFS_DEVICE_RANDOM  4u
 #define VFS_DEVICE_KEYBOARD 5u
+#define VFS_DEVICE_NETWORK 6u
 
 #define VFS_MAX_PATH 256
 #define VFS_NAME_SIZE 64
