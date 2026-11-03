@@ -1,0 +1,25 @@
+# OpenKernel i386 syscall table
+# Format: number  name  arg1(EBX)  arg2(ECX)  arg3(EDX)  result
+# Negative results are -errno values. Unknown syscall numbers return -ENOSYS.
+0   exit             status                 -              -              process exit
+1   write            fd                     buffer         size           bytes written
+2   getpid           -                      -              -              process ID
+3   yield            -                      -              -              zero
+4   console_write    buffer                 size           -              bytes written
+5   fork             -                      -              -              -ENOSYS (not implemented)
+6   execve           path                   argv           envp           execution result
+7   getchar          -                      -              -              character or -EAGAIN
+8   clear            -                      -              -              zero
+9   mkdev            path                   device_type    -              zero or error
+10  readdir          path                   buffer         capacity      bytes written
+11  load_oso         path                   -              -              loader result
+12  fb_write         offset                 buffer         size           bytes written
+13  fb_put_pixel     x                      y              rgb            zero or error
+14  fb_clear         rgb                    -              -              zero or error
+15  fb_get_info      info_ptr               -              -              zero or error
+16  device_read      path                   buffer         size           bytes read
+17  device_write     path                   buffer         size           bytes written
+18  net_udp_send     request_ptr             -              -              payload bytes sent
+19  net_udp_receive  destination_port       packet_ptr     -              payload bytes received
+20  net_get_ipv4     -                      -              -              IPv4 address (host integer)
+72  panic            -                      -              -              kernel panic; does not return

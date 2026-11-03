@@ -33,6 +33,11 @@
 #define OK_SYS_FB_PUT_PIXEL 13u
 #define OK_SYS_FB_CLEAR 14u
 #define OK_SYS_FB_GET_INFO 15u
+#define OK_SYS_DEVICE_READ 16u
+#define OK_SYS_DEVICE_WRITE 17u
+#define OK_SYS_NET_UDP_SEND 18u
+#define OK_SYS_NET_UDP_RECEIVE 19u
+#define OK_SYS_NET_GET_IPV4 20u
 
 struct ok_fb_info {
 	uint32_t width;

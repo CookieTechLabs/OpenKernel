@@ -2,6 +2,7 @@
 #include <kernel/tar.h>
 #include <write/write.h>
 #include <driver/keyboard.h>
+#include <driver/net.h>
 #include "proc/proc.h"
 
 #define MAX_VFS_NODES 256
@@ -46,6 +47,9 @@ static int device_read(struct vfs_node *node, char *buffer, uint32_t size) {
         }
         return (int)copied;
     }
+    if (type == VFS_DEVICE_NETWORK) {
+        return net_device_read(buffer, size);
+    }
     for (uint32_t index = 0; index < size; index++) {
         if (type == VFS_DEVICE_RANDOM) {
             random_state = random_state * 1664525u + 1013904223u;
@@ -66,6 +70,9 @@ static int device_write(struct vfs_node *node, const char *buffer,
     }
     if (type == VFS_DEVICE_CONSOLE) {
         return console_device_write(node, buffer, size);
+    }
+    if (type == VFS_DEVICE_NETWORK) {
+        return net_device_write(buffer, size);
     }
     return (int)size;
 }
@@ -463,7 +470,7 @@ int vfs_create_device(const char *path, uint32_t type) {
     if (path == 0 || path[0] != '/' || path[1] == '\0' ||
         (type != VFS_DEVICE_CONSOLE && type != VFS_DEVICE_NULL &&
          type != VFS_DEVICE_ZERO && type != VFS_DEVICE_RANDOM &&
-         type != VFS_DEVICE_KEYBOARD)) {
+         type != VFS_DEVICE_KEYBOARD && type != VFS_DEVICE_NETWORK)) {
         return -1;
     }
     node = vfs_lookup(vfs_get_root(), path);

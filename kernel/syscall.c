@@ -2,6 +2,7 @@
 #include <kernel/syscall.h>
 #include <kernel/process.h>
 #include <driver/keyboard.h>
+#include <driver/net.h>
 #include <kvideo/fb.h>
 #include "../fs/vfs.h"
 #include <write/write.h>
@@ -9,6 +10,7 @@
 
 #define OK_SYSCALL_WRITE_MAX   4096u
 #define OK_SYSCALL_READDIR_MAX 1024u
+#define OK_SYSCALL_DEVICE_IO_MAX 4096u
 
 extern int execve(const char *filename, char *const argv[],
                   char *const envp[]);
@@ -163,6 +165,76 @@ int32_t syscall_dispatch(uint32_t number,
             (char *)(uintptr_t)arg2,
             arg3
         );
+
+    case OK_SYS_DEVICE_READ:
+        if (arg1 == 0 || (arg2 == 0 && arg3 != 0)) {
+            return -OK_EFAULT;
+        }
+        if (arg3 > OK_SYSCALL_DEVICE_IO_MAX) {
+            return -22;
+        }
+        {
+            int result = vfs_read_file(
+                vfs_get_root(),
+                (const char *)(uintptr_t)arg1,
+                (char *)(uintptr_t)arg2,
+                arg3
+            );
+            return result == -11 ? -OK_EAGAIN :
+                   result < 0 ? -OK_EIO : result;
+        }
+
+    case OK_SYS_DEVICE_WRITE:
+        if (arg1 == 0 || (arg2 == 0 && arg3 != 0)) {
+            return -OK_EFAULT;
+        }
+        if (arg3 > OK_SYSCALL_DEVICE_IO_MAX) {
+            return -22;
+        }
+        {
+            int result = vfs_write_file(
+                vfs_get_root(),
+                (const char *)(uintptr_t)arg1,
+                (const char *)(uintptr_t)arg2,
+                arg3
+            );
+            return result == -11 ? -OK_EAGAIN :
+                   result < 0 ? -OK_EIO : result;
+        }
+
+    case OK_SYS_NET_UDP_SEND: {
+        const struct net_udp_send_request *request =
+            (const struct net_udp_send_request *)(uintptr_t)arg1;
+
+        if (request == 0 || (request->data == 0 && request->length != 0)) {
+            return -OK_EFAULT;
+        }
+        if (request->length > NET_UDP_PAYLOAD_MAX) {
+            return -22;
+        }
+        int result = net_udp_send(request->destination_ipv4,
+                                 request->source_port,
+                                 request->destination_port,
+                                 request->data, request->length);
+        return result == -11 ? -OK_EAGAIN :
+               result < 0 ? -OK_EIO : result;
+    }
+
+    case OK_SYS_NET_UDP_RECEIVE: {
+        struct net_udp_packet *packet =
+            (struct net_udp_packet *)(uintptr_t)arg2;
+        int result;
+
+        if (packet == 0) {
+            return -OK_EFAULT;
+        }
+        result = net_udp_receive((uint16_t)arg1, packet);
+        return result == -11 ? -OK_EAGAIN :
+               result < 0 ? -OK_EIO : result;
+    }
+
+    case OK_SYS_NET_GET_IPV4:
+        return (int32_t)net_ipv4_address();
 
     case OK_SYS_PANIC:
         panic("OpenKernel: panicc syscall invoked");
