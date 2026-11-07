@@ -18,6 +18,7 @@
 #include "../fs/vfs.h"
 #include <memory/page.h>
 #include <kernel/module.h>
+#include <kernel/vdso.h>
 
 // Fix Undefined errors
 #ifndef NULL
@@ -81,6 +82,7 @@ void kernel_main(uint32_t magic, uint32_t multiboot_addr, uint32_t oem)
     if (memory_init(mbi) != 0) {
         panic("Physical memory initialization failed!");
     }
+    vdso_init();
     bootopts_init((mbi->flags & (1u << 2))
                       ? (const char *)(uintptr_t)mbi->cmdline : 0);
     k_set_quiet(bootopts_quiet());

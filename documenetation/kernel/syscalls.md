@@ -23,6 +23,7 @@ errors. Programs are compiled for 32-bit x86.
 | List directory | `ok_listdir(path, buf, capacity)` | Newline-separated names; kernel maximum is 1024 bytes. |
 | Load OSO | `ok_load_oso(path)` | Loads a fixed-address OSO image; see [Programs and processes](processes.md). |
 | Insert/remove kernel module | `ok_module_load(path)`, `ok_module_unload(name)` | Loads an i386 ELF relocatable `.ko` from the initramfs or removes an inserted module. Modules execute at kernel privilege. |
+| Shared syscall ABI | `ok_vdso_get()` | Returns the versioned shared ABI page. Its syscall trampoline uses `int 0x80`; `ok_getpid()` reads the current PID directly from the page. |
 | Framebuffer | `ok_fb_*()` | Display info, raw-byte write, RGB pixel, and clear; see [Framebuffer API](framebuffer.md). |
 
 Unknown syscall numbers return `-OK_ENOSYS`. See
@@ -40,3 +41,7 @@ pointers.
 Framebuffer-specific behavior and limits are documented in
 [Framebuffer API](framebuffer.md). The implementation and dispatch table are
 in `kernel/syscall.c`.
+
+The vDSO-like page is page-aligned and shared in the kernel's identity-mapped
+address space. It is not mapped read-only or separately into process address
+spaces; the current execution model has no per-process mappings or protection.

@@ -2,6 +2,7 @@
 #include <kernel/syscall.h>
 #include <kernel.h>
 #include <memory/page.h>
+#include <kernel/vdso.h>
 
 static uint32_t current_pid;
 static uint32_t next_pid;
@@ -80,6 +81,7 @@ struct process *process_alloc(void) {
 
 void process_system_init(void) {
     current_pid = 0;
+    vdso_set_current_pid(current_pid);
     next_pid = 1;
     current_process = &process_table[0];
     inside_syscall = 0;
@@ -119,6 +121,7 @@ uint32_t process_enter_program(void) {
         current_process->state = PROCESS_STATE_READY;
     }
     current_pid = next_pid++;
+    vdso_set_current_pid(current_pid);
     if (next_pid == 0) {
         next_pid = 1;
     }
@@ -140,6 +143,7 @@ void process_leave_program(uint32_t previous_pid) {
         current_process->state = PROCESS_STATE_UNUSED;
     }
     current_pid = previous_pid;
+    vdso_set_current_pid(current_pid);
     current_process = process_find_slot(previous_pid);
     if (current_process == 0) {
         current_process = &process_table[0];
@@ -274,6 +278,7 @@ uint32_t *process_interrupt_return(uint32_t *frame, uint32_t syscall_number) {
     }
     current_process = next;
     current_pid = next->pid;
+    vdso_set_current_pid(current_pid);
     next->state = PROCESS_STATE_RUNNING;
     return next->interrupt_frame;
 }

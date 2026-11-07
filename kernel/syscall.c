@@ -8,6 +8,7 @@
 #include <write/write.h>
 #include <kernel.h>
 #include <kernel/module.h>
+#include <kernel/vdso.h>
 
 #define OK_SYSCALL_WRITE_MAX   4096u
 #define OK_SYSCALL_READDIR_MAX 1024u
@@ -64,6 +65,9 @@ int32_t syscall_dispatch(uint32_t number,
 
     case OK_SYS_GETPID:
         return (int32_t)process_current_pid();
+
+    case OK_SYS_VDSO:
+        return (int32_t)(uintptr_t)vdso_page();
 
     case OK_SYS_LOAD_OSO:
         if (arg1 == 0) {

@@ -4,6 +4,34 @@
 #include <stdint.h>
 #include <kernel/syscall.h>
 
+static inline int32_t ok_syscall3_raw(uint32_t number, uint32_t arg1,
+                                      uint32_t arg2, uint32_t arg3) {
+    int32_t result;
+    __asm__ volatile ("int $0x80"
+                      : "=a" (result)
+                      : "0" (number), "b" (arg1), "c" (arg2), "d" (arg3)
+                      : "memory", "cc");
+    return result;
+}
+
+static inline const struct ok_vdso_page *ok_vdso_get(void) {
+    static const struct ok_vdso_page *page;
+
+    if (page == 0) {
+        int32_t address = ok_syscall3_raw(OK_SYS_VDSO, 0, 0, 0);
+        const struct ok_vdso_page *candidate = address > 0
+            ? (const struct ok_vdso_page *)(uintptr_t)(uint32_t)address
+            : 0;
+
+        if (candidate != 0 &&
+            candidate->abi_version == OK_VDSO_ABI_VERSION &&
+            candidate->size >= sizeof(*candidate)) {
+            page = candidate;
+        }
+    }
+    return page;
+}
+
 /*
  * OpenKernel's current 32-bit software-interrupt ABI:
  * EAX = syscall number; EBX, ECX, EDX = arguments; EAX = result.
@@ -11,12 +39,15 @@
  */
 static inline int32_t ok_syscall3(uint32_t number, uint32_t arg1,
                                   uint32_t arg2, uint32_t arg3) {
-    int32_t result;
-    __asm__ volatile ("int $0x80"
-                      : "=a" (result)
-                      : "0" (number), "b" (arg1), "c" (arg2), "d" (arg3)
-                      : "memory", "cc");
-    return result;
+    const struct ok_vdso_page *page = ok_vdso_get();
+
+    if (page != 0 && page->syscall3 != 0) {
+        int32_t (*syscall3)(uint32_t, uint32_t, uint32_t, uint32_t) =
+            (int32_t (*)(uint32_t, uint32_t, uint32_t, uint32_t))
+                (uintptr_t)page->syscall3;
+        return syscall3(number, arg1, arg2, arg3);
+    }
+    return ok_syscall3_raw(number, arg1, arg2, arg3);
 }
 
 static inline int32_t ok_write(int fd, const void *buffer, uint32_t size) {
@@ -97,6 +128,11 @@ static inline int32_t ok_puts(const char *text) {
 }
 
 static inline int32_t ok_getpid(void) {
+    const struct ok_vdso_page *page = ok_vdso_get();
+
+    if (page != 0) {
+        return (int32_t)page->current_pid;
+    }
     return ok_syscall3(OK_SYS_GETPID, 0, 0, 0);
 }
 

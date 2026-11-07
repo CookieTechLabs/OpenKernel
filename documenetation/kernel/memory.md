@@ -20,6 +20,11 @@ Userspace executables run at kernel privilege in the shared address space, and
 syscall pointers are generally trusted. A malformed or hostile program can
 corrupt the kernel even if its load range passed the quota check.
 
+The kernel publishes a page-aligned, versioned vDSO-like ABI page for a shared
+syscall trampoline and a direct `getpid()` fast path. It is not independently
+mapped or protected per process; it shares the current identity-mapped kernel
+address space and must not be treated as a security boundary.
+
 `oom_kill()` still logs the requested range and panics; it does not reclaim
 memory or kill an isolated process. See [Programs and processes](processes.md)
 for loader constraints and [Kernel panic](panic.md) for failure behavior.

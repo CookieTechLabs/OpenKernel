@@ -40,12 +40,24 @@
 #define OK_SYS_NET_GET_IPV4 20u
 #define OK_SYS_MODULE_LOAD 21u
 #define OK_SYS_MODULE_UNLOAD 22u
+#define OK_SYS_VDSO 23u
+
+#define OK_VDSO_ABI_VERSION 1u
+#define OK_VDSO_PAGE_SIZE 4096u
 
 struct ok_fb_info {
 	uint32_t width;
 	uint32_t height;
 	uint32_t pitch;
 	uint32_t bits_per_pixel;
+};
+
+struct ok_vdso_page {
+	uint32_t abi_version;
+	uint32_t size;
+	volatile uint32_t current_pid;
+	uint32_t syscall3;
+	uint8_t reserved[OK_VDSO_PAGE_SIZE - 16u];
 };
 
 
