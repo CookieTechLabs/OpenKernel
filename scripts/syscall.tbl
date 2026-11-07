@@ -22,4 +22,5 @@
 18  net_udp_send     request_ptr             -              -              payload bytes sent
 19  net_udp_receive  destination_port       packet_ptr     -              payload bytes received
 20  net_get_ipv4     -                      -              -              IPv4 address (host integer)
+24  reboot           -                      -              -              system reboot; does not return
 72  panic            -                      -              -              kernel panic; does not return

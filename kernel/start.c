@@ -14,6 +14,7 @@
 #include <kernel/desktop.h>
 #include <kernel/okfs.h>
 #include <kernel/bootopts.h>
+#include <kernel/acpi.h>
 #include <kvideo/fbcon.h>
 #include "../fs/vfs.h"
 #include <memory/page.h>
@@ -81,6 +82,9 @@ void kernel_main(uint32_t magic, uint32_t multiboot_addr, uint32_t oem)
     assert(mbi != NULL);
     if (memory_init(mbi) != 0) {
         panic("Physical memory initialization failed!");
+    }
+    if (!acpi_init()) {
+        k_print("[ACPI] Reset register unavailable; reboot will use the keyboard controller.\n");
     }
     vdso_init();
     bootopts_init((mbi->flags & (1u << 2))

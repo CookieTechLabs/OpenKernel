@@ -157,12 +157,15 @@ BUILTIN_ARCHIVES = $(C_BUILTIN_ARCHIVES) $(ASM_BUILTIN_ARCHIVES)
 DEPS = $(C_OBJECTS:.o=.d) $(MOD_OBJS:.mo=.d)
 
 .PHONY: all configured-build clean linux run-linux os.iso patch_modules modules \
-	oconf-tools olddefconfig config-build
+	oconf-tools olddefconfig config-build version
 
 # Generate .config first, then restart Make so source lists use it.
 all:
 	@$(MAKE) --no-print-directory olddefconfig
 	@$(MAKE) --no-print-directory configured-build
+
+version:
+	@echo "$(VERSION)"
 
 configured-build: $(VERSION_HEADER) $(BUILDENV_HEADER) \
 	$(OPENKERNEL_A) $(PLAIN_KERNEL) $(KERNEL)
@@ -198,19 +201,19 @@ $(BUILDENV_HEADER):
 # Compile C sources.
 $(BUILD_DIR)/c/%.o: %.c $(VERSION_HEADER) $(BUILDENV_HEADER)
 	@mkdir -p $(dir $@)
-	@echo "CC $<"
+	@echo "CC $@"
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 # Assemble NASM sources.
 $(BUILD_DIR)/asm/%.o: %.asm
 	@mkdir -p $(dir $@)
-	@echo "AS $<"
+	@echo "AS $@"
 	@$(AS) $(ASFLAGS) $< -o $@
 
 # Compile loadable module objects.
 $(MOD_DIR)/%.mo: modules/%.c $(VERSION_HEADER)
 	@mkdir -p $(dir $@)
-	@echo "CC $<"
+	@echo "CC $@"
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(MODULE_INSTALL_DIR)/%.ko: $(MOD_DIR)/%.mo
@@ -223,7 +226,7 @@ modules: $(MODULE_IMAGES)
 # Convert the bitmap logo into an ELF object.
 $(LOGO_OBJ): kernel/video/logo.bmp
 	@mkdir -p $(dir $@)
-	@echo "OBJCOPY $<"
+	@echo "OBJCOPY $@"
 	@objcopy -I binary -O elf32-i386 -B i386 $< $@
 
 # Generate a built-in.a archive for each C object directory.

@@ -14,6 +14,7 @@ errors. Programs are compiled for 32-bit x86.
 | Write active console | `ok_console_write(buf, size)` | Maximum 4096 bytes per dispatch. |
 | Get process ID | `ok_getpid()` | Returns the current cooperative process ID. |
 | Yield | `ok_yield()` | Cooperatively schedules a runnable process; no timer preemption. |
+| Reboot | `ok_reboot()` | Requests a system reboot using ACPI reset support or the keyboard-controller fallback; does not return. |
 | Fork | `fork()` / `ok_fork()` | Clones the active stack; parent gets child PID, child gets zero. Address space remains shared. |
 | Exit | `ok_exit(status)` | Returns from a loaded program when an execution context is active; PID 1 cannot exit. |
 | Execute image | `execve(path, argv, envp)` | Looks up the image in initramfs; `argv` and `envp` are currently ignored. |

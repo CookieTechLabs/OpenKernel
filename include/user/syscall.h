@@ -154,6 +154,15 @@ static inline void ok_panic(void)
     }
 }
 
+static inline void ok_reboot(void)
+{
+    (void)ok_syscall3(OK_SYS_REBOOT, 0, 0, 0);
+
+    for (;;) {
+        __asm__ volatile ("pause");
+    }
+}
+
 static inline int32_t ok_fb_write(uint32_t offset, const void *buffer,
                                   uint32_t size) {
     if (buffer == 0 && size != 0) {

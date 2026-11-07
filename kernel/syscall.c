@@ -9,6 +9,7 @@
 #include <kernel.h>
 #include <kernel/module.h>
 #include <kernel/vdso.h>
+#include <kernel/acpi.h>
 
 #define OK_SYSCALL_WRITE_MAX   4096u
 #define OK_SYSCALL_READDIR_MAX 1024u
@@ -252,6 +253,10 @@ int32_t syscall_dispatch(uint32_t number,
         return module_remove((const char *)(uintptr_t)arg1) == 0
                    ? 0
                    : -22;
+
+    case OK_SYS_REBOOT:
+        acpi_reboot();
+        return 0;
 
     case OK_SYS_PANIC:
         panic("OpenKernel: panicc syscall invoked");

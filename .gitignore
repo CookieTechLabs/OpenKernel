@@ -23,3 +23,5 @@ openkernel
 
 scripts/oconf/config-build
 scripts/oconf/config-parser
+
+/privatebfs.sh
