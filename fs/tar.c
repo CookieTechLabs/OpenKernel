@@ -95,9 +95,10 @@ void tar_parse(uint32_t address) {
     }
 
     const char *init_path = bootopts_init_path();
-    int found_boot = 0;
-    int found_root = 0;
+    int found_boot   = 0;
+    int found_root   = 0;
     int found_device = 0;
+    int found_sys    = 0;
 
     while (header->name[0] != '\0') {
         const char *name = header->name;
@@ -115,6 +116,10 @@ void tar_parse(uint32_t address) {
             (name[6] == '/' || name[6] == '\0')) {
             found_device = 1;
         }
+        if ((name[0] == 's' && name[1] == 'y' && name[2] == 's') && 
+            (name[3] == '/' || name[3] == '\0')) {
+            found_sys = 1;
+        }
 
         uint32_t size = tar_to_int(header->size);
         uint32_t blocks = (size + 512 - 1) / 512;
@@ -125,10 +130,12 @@ void tar_parse(uint32_t address) {
     if (found_boot) k_print("[VFS] Detected /boot directory\n");
     if (found_root) k_print("[VFS] Detected /root directory\n");
     if (found_device) k_print("[VFS] Detected /device directory\n");
+    if (found_sys) k_print("[VFS] Detected /sys directory\n");
 
     if (!found_boot) panic("/boot/ not found!");
     if (!found_root) panic("/root/ not found!");
     if (!found_device) panic("/device/ not found!");
+    if (!found_sys) panic("/sys/ not found!");
 
     uint32_t init_size = 0;
     const char *init_data = tar_get_file(initrd_base, init_path, &init_size);
