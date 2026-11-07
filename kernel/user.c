@@ -1,18 +1,24 @@
-#include <user/user.h>
 #include <write/write.h>
+#include <kernel/user.h>
 
-static user_process_t current_user_process;
+static uid_t current_uid = UID_ROOT;
 
-void user_init(void) {
-    k_print("[USER] Initializing user-space subsystem\n");
-    current_user_process.pid = 0;
-    current_user_process.active = 0;
+void user_init(void)
+{
+    current_uid = UID_ROOT;
 }
 
-int user_create_process(uint32_t entry_point) {
-    k_print("[USER] Spawning user process...\n");
-    current_user_process.pid = 1;
-    current_user_process.eip = entry_point;
-    current_user_process.active = 1;
-    return current_user_process.pid;
+uid_t getuid(void)
+{
+    return current_uid;
+}
+
+int setuid(uid_t uid)
+{
+    /* Only root can change the current UID. */
+    if (current_uid != UID_ROOT && current_uid != UID_SROOT)
+        return -1;
+
+    current_uid = uid;
+    return 0;
 }
