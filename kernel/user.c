@@ -1,24 +1,34 @@
 #include <write/write.h>
 #include <kernel/user.h>
-
-static uid_t current_uid = UID_ROOT;
+#include <kernel/process.h>
 
 void user_init(void)
 {
-    current_uid = UID_ROOT;
 }
 
 uid_t getuid(void)
 {
-    return current_uid;
+    struct process *process = process_current();
+
+    if (process == 0)
+        return UID_ROOT;
+
+    return process->uid;
 }
 
 int setuid(uid_t uid)
 {
-    /* Only root can change the current UID. */
-    if (current_uid != UID_ROOT && current_uid != UID_SROOT)
+    struct process *process = process_current();
+
+    if (process == 0)
         return -1;
 
-    current_uid = uid;
+    if (process->uid != UID_ROOT &&
+        process->uid != UID_SROOT) {
+        k_print("Only root can change the current UID!\n");
+        return -1;
+    }
+
+    process->uid = uid;
     return 0;
 }

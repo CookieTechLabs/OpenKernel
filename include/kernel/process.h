@@ -2,6 +2,7 @@
 #define KERNEL_PROCESS_H
 
 #include <stdint.h>
+#include <kernel/user.h>
 
 #define PROCESS_STATE_UNUSED    0
 #define PROCESS_STATE_READY     1
@@ -12,6 +13,8 @@
 struct process {
     uint32_t pid;
     uint32_t parent_pid;
+
+    uid_t uid;
 
     uint32_t state;
     int32_t exit_status;
@@ -39,5 +42,6 @@ uint32_t *process_interrupt_return(uint32_t *frame, uint32_t syscall_number);
 
 struct process *process_find(uint32_t pid);
 struct process *process_alloc(void);
+struct process *process_current(void);
 
 #endif
