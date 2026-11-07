@@ -1,0 +1,5 @@
+CONFIG=CONFIG_HOST
+
+DEFAULT=n
+
+SOURCE=main.c
